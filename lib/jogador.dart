@@ -14,7 +14,7 @@ class Jogador extends Personagem {
 
   int _vidas; // Variável privada (_nomeDaVariavel)
   int passos; // Variável publica
-
+  int gold = 0;
   // Getter para variável vida
   int get vidas => _vidas;
 
@@ -26,7 +26,7 @@ class Jogador extends Personagem {
 
   // Método inline verifica se o jogador esta vivo
   bool vivo() => _vidas > 0;
-
+  void addDinheiro(int goldColetado) => gold += goldColetado;
   // Método para dar dano no jogador
   // @dano: valor que será descontado da vida do jogador
   void tomarDano(int dano) {

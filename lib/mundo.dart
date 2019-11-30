@@ -1,8 +1,13 @@
+import 'dart:math';
+
+import 'package:roguelike/carneiro.dart';
 import 'package:roguelike/celula.dart';
 import 'package:roguelike/criatura.dart';
 import 'package:roguelike/jogador.dart';
-import 'package:roguelike/personagem.dart';
+import 'package:roguelike/lobo.dart';
 import 'package:roguelike/ponto_2d.dart';
+import 'package:roguelike/tesouro.dart';
+import 'entidade.dart';
 
 // Classe que representa o mundo do jogo
 class Mundo {
@@ -12,13 +17,19 @@ class Mundo {
   List<List<Celula>> mapa;
   // Lista de criaturas (NPCs)
   List<Criatura> criaturas;
+  // Lista de carneiros (NPCs)
+  List<Carneiro> carneiros;
+  // Lista de lobos (NPCs)
+  List<Lobo> lobos;
+  //Lista de Tesouros
+  List<Tesouro> tesouros;
   // Jogador controlado
   Jogador jogador;
 
   // Construtor padrão do mundo
   // @mapa: mapa criado de qualquer forma
   // @crituras: lista de criaturas posicionadas
-  Mundo(this.mapa, this.criaturas) {
+  Mundo(this.mapa, this.criaturas, this.carneiros, this.lobos, this.tesouros) {
     _largura = mapa.length;
     _altura = mapa[0].length;
   }
@@ -44,15 +55,51 @@ class Mundo {
         jogador.tomarDano(1);
       }
     }
+    
+    for (Carneiro carneiro in carneiros) {
+      // Atualiza posição carneiro
+      carneiro.atualizar(this);
+    }
+
+    for (Lobo lobo in lobos) {
+      // Atualiza posição lobo
+      lobo.atualizar(this);
+
+      if (lobo.posicao.toString() == jogador.posicao.toString()) {
+        // jogador perde uma vida
+        jogador.tomarDano(1);
+      }
+    }
+    
+    if(tesouros.any((t) => t.posicao.toString() == jogador.posicao.toString())){
+           
+      tesouros.removeWhere((t) => t.posicao.toString() == jogador.posicao.toString());
+      jogador.gold += Random().nextInt(5) * 15;
+    }
   }
 
   // Método para desenhar o mundo no console
   void desenhar() {
 
     // Criar um mapa de criaturas baseado em suas posições
-    Map<String, Personagem> map = Map();
+    Map<String, Entidade> map = Map();
     for (Criatura creature in criaturas) {
       map[creature.posicao.toString()] = creature;
+    }
+
+    // Adicionar carneiros do mapa
+    for (Carneiro carneiro in carneiros) {
+      map[carneiro.posicao.toString()] = carneiro;
+    }
+
+    // Adicionar Lobos no mapa
+    for (Lobo lobo in lobos) {
+      map[lobo.posicao.toString()] = lobo;
+    }
+
+    // Adicionamos os tesouros no mapa
+    for (Tesouro tesouro in tesouros) {
+      map[tesouro.posicao.toString()] = tesouro;
     }
 
     // Adicionamos também o jogador no mapa
@@ -62,6 +109,7 @@ class Mundo {
     print("Jogador está em [${jogador.posicao}]");
     print("Vidas: ${jogador.vidas}");
     print("Passos: ${jogador.passos}");
+    print("Gold: ${jogador.gold}");
 
     // Desenhar o mapa (percorre todas as linhas)
     for (int y = 0; y < _altura; y++) {
@@ -71,10 +119,15 @@ class Mundo {
 
         // SE na posição X, Y existe algo além do chão, então
         if (map[Ponto2D(x, y).toString()] != null) {
-          // SE a posição tem um jogador, desenha o jogador, caso contrário desenha a criatura
+          // SE a posição tem um jogador, desenha o jogador
           if (map[Ponto2D(x, y).toString()].simbolo == Jogador.SIMBOLO_JOGADOR) {
             line += '\u001b[34;1m' + map[Ponto2D(x, y).toString()].toString();
-          } else {
+          }           
+          else if(map[Ponto2D(x, y).toString()].simbolo == Tesouro.SIMBOLO_TESOURO) {
+            line += '\u001b[33;1m' + map[Ponto2D(x, y).toString()].toString();
+          } 
+          // Adicionar cor para criatura
+          else {
             line += '\u001b[31;1m' + map[Ponto2D(x, y).toString()].toString();
           }
         } else { // Desenha o mapa
